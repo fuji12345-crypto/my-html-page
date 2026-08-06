@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エステサロンへの出資・採用支援スキーム（透明版・検討用）</title>
+<style>
+  :root{
+    --bg:#0f1720;
+    --card:#16212e;
+    --ink:#e8eef5;
+    --muted:#9fb0c3;
+    --accent:#4aa3ff;
+    --good:#3ecf8e;
+    --warn:#ffb454;
+    --line:#28384a;
+    --maxw:960px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .deck{max-width:var(--maxw);margin:0 auto;padding:24px 20px 96px}
+
+  /* Slide */
+  .slide{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:40px 40px 44px;
+    margin:0 0 28px;
+    scroll-margin-top:20px;
+  }
+  .slide .no{
+    display:inline-block;
+    font-size:.72rem;
+    letter-spacing:.12em;
+    color:var(--muted);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:4px 12px;
+    margin-bottom:18px;
+  }
+  h1{font-size:2rem;line-height:1.35;margin-bottom:14px}
+  h2{font-size:1.5rem;line-height:1.4;margin-bottom:18px}
+  .sub{color:var(--muted);font-size:1.02rem;margin-bottom:8px}
+  .maker{color:var(--muted);font-size:.95rem;margin-top:24px}
+
+  ul{list-style:none;margin:8px 0}
+  li{position:relative;padding:6px 0 6px 26px;color:var(--ink)}
+  li::before{content:"";position:absolute;left:4px;top:15px;width:8px;height:8px;border-radius:2px;background:var(--accent)}
+  li.good::before{background:var(--good)}
+  li.warn::before{background:var(--warn)}
+  li small{display:block;color:var(--muted);font-size:.9rem;padding-top:2px}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}}
+  .box{background:#111b26;border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .box h3{font-size:1.05rem;margin-bottom:10px;color:var(--accent)}
+  .box.good h3{color:var(--good)}
+  .box p{color:var(--muted);font-size:.95rem}
+
+  .callout{
+    border-radius:12px;padding:16px 18px;margin-top:20px;
+    border:1px solid var(--warn);
+    background:rgba(255,180,84,.08);
+    font-size:.95rem;
+  }
+  .callout b{color:var(--warn)}
+  .callout.info{border-color:var(--accent);background:rgba(74,163,255,.08)}
+  .callout.info b{color:var(--accent)}
+
+  .steps{counter-reset:step;margin-top:8px}
+  .steps li{padding-left:44px}
+  .steps li::before{content:counter(step);counter-increment:step;background:var(--accent);color:#06121f;
+    width:26px;height:26px;border-radius:50%;left:0;top:8px;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:.85rem}
+
+  .disclaimer{
+    max-width:var(--maxw);margin:0 auto 20px;padding:16px 20px;
+    background:rgba(255,180,84,.1);border:1px solid var(--warn);border-radius:12px;
+    color:var(--ink);font-size:.92rem;
+  }
+  .disclaimer b{color:var(--warn)}
+
+  footer{max-width:var(--maxw);margin:8px auto 0;color:var(--muted);font-size:.82rem;text-align:center;padding:20px}
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <div class="disclaimer">
+    <b>本資料は社内検討用のたたき台です。</b> 記載の内容は法務・税務・労務の助言ではありません。
+    出資・採用支援・利益配分の各設計は、<b>実行前に必ず弁護士・社会保険労務士・税理士</b>の確認を受けてください。
+  </div>
+
+  <!-- Slide 1 -->
+  <section class="slide" id="s1">
+    <span class="no">SLIDE 1 / 6 ・ 表紙</span>
+    <h1>エステサロンへの出資・採用支援スキーム<br>（透明版・検討用）</h1>
+    <p class="sub">「隠さない・付け替えない」を前提に、出資と採用支援を正しく組み立てる</p>
+    <p class="sub">ランデックスの信用力・採用力を、正規の枠組みの中で活かす</p>
+    <p class="maker">作成元：株式会社ランデックス</p>
+  </section>
+
+  <!-- Slide 2 -->
+  <section class="slide" id="s2">
+    <span class="no">SLIDE 2 / 6 ・ 全体像</span>
+    <h2>本プロジェクトの全体像</h2>
+    <p class="sub">出資は「出資」として、採用支援は「役務」として、それぞれ実態どおりに切り分ける。</p>
+    <div class="grid">
+      <div class="box">
+        <h3>ランデックスの役割</h3>
+        <p>① 正規の投資としての出資（採用予算の一部負担を含む）<br>
+        ② 採用実務・採用コンサルティングの役務提供（実費・実態ベース）</p>
+      </div>
+      <div class="box">
+        <h3>〇〇サロンの役割</h3>
+        <p>① 店舗運営<br>
+        ② <b>雇用主として</b>採用スタッフの受け入れ・雇用契約の締結</p>
+      </div>
+    </div>
+    <div class="callout info">
+      <b>ポイント：</b> お金の流れを一本にまとめて「わかりにくくする」のではなく、
+      <b>出資と役務対価を別建て</b>にして、それぞれ根拠書類が残る形にします。
+    </div>
+  </section>
+
+  <!-- Slide 3 -->
+  <section class="slide" id="s3">
+    <span class="no">SLIDE 3 / 6 ・ 前提</span>
+    <h2>守るべき「隠さない」3原則</h2>
+    <ul>
+      <li class="good">出資は出資として処理する<small>名目の付け替えをしない。株式取得または匿名組合など、選んだ形に応じた正しい会計・税務処理を行う。</small></li>
+      <li class="good">採用支援は実態のある役務の対価としてのみ請求する<small>実際に提供した採用実務・コンサルに対して、実費・実態に見合う金額を請求。架空・水増しをしない。</small></li>
+      <li class="good">雇用主はサロンであることを明記する<small>求人票・契約書に「実際の雇用主は〇〇サロン」と明示。応募者に対して労働条件を正確に提示する。</small></li>
+    </ul>
+    <div class="callout">
+      <b>採らない選択：</b> 「税務署に怪しまれないよう名目を変える」「連名にすれば法的リスクはゼロ」といった
+      <b>回避を目的にした設計は行いません。</b> 透明性そのものが、後々の一番のリスク対策になります。
+    </div>
+  </section>
+
+  <!-- Slide 4 -->
+  <section class="slide" id="s4">
+    <span class="no">SLIDE 4 / 6 ・ リターン設計</span>
+    <h2>クリーンな利益配分（リターン）の考え方</h2>
+    <div class="grid">
+      <div class="box good">
+        <h3>推奨軸：成果報酬 ＋ 正規の配当／分配</h3>
+        <p>「採用1人につき〇万円」の<b>採用実務の成果報酬</b>で初期投資を回収し、
+        残りは出資形態に応じた<b>正規の配当（株式）または分配金（匿名組合）</b>として受け取る。
+        税務署・サロン側とも最も揉めにくいクリーンな形。</p>
+      </div>
+      <div class="box">
+        <h3>匿名組合を使う場合の注意</h3>
+        <p>分配金は<b>「分配金」として正しい名目</b>で処理し、
+        源泉徴収など所定の税務処理を行う。コンサル料などへの付け替えはしない。
+        具体処理は税理士に確認。</p>
+      </div>
+    </div>
+    <div class="callout">
+      <b>採らない形：</b> 「採用したスタッフ個人の月間売上の〇％を毎月回収」する設計は、
+      <b>労働者供給事業（職業安定法44条・原則禁止）</b>に近い構図となり得るため採用しません。
+      リターンは「役務の対価」か「出資へのリターン」に限定します。
+    </div>
+  </section>
+
+  <!-- Slide 5 -->
+  <section class="slide" id="s5">
+    <span class="no">SLIDE 5 / 6 ・ 要確認論点</span>
+    <h2>実行前に必ず専門家に確認する論点</h2>
+    <ul>
+      <li class="warn">職業安定法・労働者派遣法の適合性<small>共同募集の可否、労働者供給・職業紹介に当たらないか　→ 社会保険労務士・弁護士</small></li>
+      <li class="warn">匿名組合／出資の税務・源泉徴収<small>分配金の課税区分、源泉義務、請求名目の妥当性　→ 税理士</small></li>
+      <li class="warn">契約書の整備<small>出資契約・匿名組合契約・業務委託契約の条項　→ 弁護士</small></li>
+      <li class="warn">登記（目的欄）の要否<small>事業内容によって変更登記が必要か　→ 司法書士・弁護士</small></li>
+    </ul>
+    <div class="callout info">
+      <b>進め方の原則：</b> 「登記費用がかからないか」「怪しまれないか」を出発点にせず、
+      <b>実態に合った適法な形を先に決め</b>、その結果として必要な登記・処理を粛々と行います。
+    </div>
+  </section>
+
+  <!-- Slide 6 -->
+  <section class="slide" id="s6">
+    <span class="no">SLIDE 6 / 6 ・ 進め方</span>
+    <h2>今後の進め方（Next Action）</h2>
+    <ul class="steps">
+      <li>専門家チーム（弁護士・社労士・税理士）を確定し、スキームの法務・税務レビューを依頼</li>
+      <li>リターン設計（成果報酬＋配当／分配）と出資形態・出資比率・採用予算を確定</li>
+      <li>レビュー結果を反映した契約書（出資／匿名組合／業務委託）を締結</li>
+      <li>求人票に雇用主（〇〇サロン）と労働条件を正確に明記して入稿・採用スタート</li>
+    </ul>
+    <div class="callout info">
+      各ステップは専門家の確認を通したうえで進めます。合意事項は都度書面化し、根拠が残る形で運用します。
+    </div>
+  </section>
+
+  <footer>
+    株式会社ランデックス ／ 社内検討用資料 ・ 本資料は法務・税務・労務の助言ではありません
+  </footer>
+
+</div>
+</body>
+</html>
