@@ -53,16 +53,16 @@ PCのClaude Codeは、最初にこのファイルと `beacon/README.md` を読�
 
 前提：PCに Node.js と git がある。Googleは fujimoto@landex-ltd.com でログインする。
 
-1. https://script.google.com/home/usersettings で「Google Apps Script API」をオンにする（藤本さんが行う）。
+1. 「Google Apps Script API」がオンか確かめる（藤本さんは別件ですでにPCのClaudeとGASを連携しているので、オンのはず）。`clasp push` で API が無効というエラーが出たときだけ、https://script.google.com/home/usersettings でオンにする。
 2. リポジトリを取ってきて、ブランチを切り替える。
    ```
    git clone https://github.com/fuji12345-crypto/my-html-page.git
    cd my-html-page
    git checkout claude/beacon-mock
    ```
-3. clasp でログインし、GASプロジェクトを作って反映する。
+3. clasp でGASプロジェクトを作って反映する。別件で使った clasp のログインが残っていれば `login` は要らない（`npx @google/clasp show-authorized-user` で fujimoto@landex-ltd.com か確かめる。古い版は `clasp login --status`）。
    ```
-   npx @google/clasp login
+   npx @google/clasp login   # ログインが残っていないときだけ
    npx @google/clasp create --type standalone --title "LANDEX BEACON" --rootDir beacon/gas
    npx @google/clasp push
    ```
