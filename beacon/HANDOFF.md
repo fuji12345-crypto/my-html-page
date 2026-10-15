@@ -68,8 +68,10 @@ PCのClaude Codeは、最初にこのファイルと `beacon/README.md` を読�
    ```
    - `create` が `beacon/gas/appsscript.json` を上書きした場合は、`git checkout beacon/gas/appsscript.json` で戻してから `push` し直す（ウェブアプリと権限の設定が入っているため）。
    - `.clasp.json` はスクリプトIDが入るので、コミットするかどうか藤本さんに聞く。
-4. `npx @google/clasp open-script`（古い版は `clasp open`）でGASエディタを開く。ここからは藤本さんの操作。
-   - 「プロジェクトの設定 → スクリプト プロパティ」に `TODOIST_TOKEN` を追加（Todoist「設定 → 連携機能 → 開発者」のAPIトークン）。
+4. `npx @google/clasp open-script`（古い版は `clasp open`）でGASエディタを開く。
+   - BEACONは新しいGASプロジェクトなので、スクリプト プロパティ `TODOIST_TOKEN` はこのプロジェクトにも入れる必要がある。
+   - 藤本さんは別件のWebアプリですでにTodoistと連携している。PCに同じトークンの置き場所（別件の設定など）があれば、それを使ってよいか藤本さんに聞いてから入れる。トークンの値は画面やログに表示しない。
+   - 置き場所がなければ、藤本さんがエディタの「プロジェクトの設定 → スクリプト プロパティ」に入れる（Todoist「設定 → 連携機能 → 開発者」のAPIトークン）。
    - 関数 `LB_setup` を実行して権限を許可する。ログにスプレッドシートのURLが出る。
    - 関数 `LB_checkSetup` を実行し、`OK` が6行出ることを確認する。
 5. デプロイする。
