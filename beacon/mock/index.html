@@ -149,19 +149,8 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 </style>
 
 <div class="mockbar"><div class="mockbar-in">
-  <strong style="color:var(--ink)">モック</strong>
-  <label for="who">ログイン中：
-    <select id="who">
-      <option value="hakkaku">八角さん（営業部）</option>
-      <option value="iwata" selected>岩田さん（営業部）</option>
-      <option value="mikawa">三川さん（総務部）</option>
-      <option value="mori">森さん（総務部）</option>
-      <option value="oono">大野さん（管理部・総務書式）</option>
-      <option value="fujiwara">藤原さん（管理部・執行役員）</option>
-      <option value="mukai">向井さん（不動産事業部）</option>
-      <option value="fujimoto">藤本（社長）</option>
-    </select>
-  </label>
+  <strong style="color:var(--ink)" id="mockName">モック</strong>
+  <label for="who" id="whoWrap">ログイン中：<select id="who"></select></label>
   <span class="mocknote">見た目と流れを確かめるためのモックです。保存やTodoistへの送信はしません。表示している案件や金額は例です。</span>
 </div></div>
 
@@ -176,59 +165,46 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 <div class="bottom" id="bottom" hidden><div class="bottom-in" id="bottomIn"></div></div>
 
 <script>
+const CFG={"mockName": "藤本さん（社長用・テスト）", "people": ["fujimoto"], "forms": {"fujimoto": {"label": "営業報告", "fields": [{"id": "work", "t": "本日の業務内容"}], "progress": {"t": "案件ごとの進捗", "name": "案件名", "nph": "ＪＴＭ様 表題登記", "bph": "状況を書いてください"}}}, "startTab": "boss", "samples": {"fujimoto": {"ph": {"work": "・見積作成\n・長谷川先生ロープレ\n・営業リストまとめ"}, "progress": {"nph": "鈴木建築設計様 八千代市 幼稚園建替え 現況測量", "bph": "先方より金額交渉の依頼あり（相談1へ）"}, "consults": [{"kind": "判断", "what": "テスト：この相談がBEACONテストの📥社長がやる に入るか", "to": "テスト"}], "mine": [{"id": "T1", "st": "ans", "kind": "判断", "date": "10/13", "due": "10/14", "title": "[鈴木建築設計様／八千代市 幼稚園建替え] 見積を450,000円→400,000円に修正して提出してよいか（岩田さん）", "thread": [{"c": "boss", "who": "藤本　10/14 9:12", "t": "【社長回答】400,000円で提出してOKです。遊具のプロットは別途とする旨を備考に入れてください。"}]}, {"id": "T2", "st": "wait", "kind": "確認", "date": "10/13", "due": "10/14", "overdue": true, "title": "[高山様／幕張展示場 訪問] 10/19(月)10:00〜 現地集合でよいか（岩田さん）", "thread": []}, {"id": "T3", "st": "wait", "kind": "判断", "date": "10/14", "due": "10/15", "title": "[ホームワーク様／世田谷区太子堂] 打合せ日程 10/22・10/23・10/26 のどれで返すか（岩田さん）", "thread": [{"c": "boss", "who": "藤本　10/14 15:40", "t": "【社長差し戻し】候補日の時間帯も書いてください。"}, {"c": "follow", "who": "岩田（BEACON）　10/15 8:50", "t": "【続報：BEACON 2026/10/15 岩田】\n3日とも10:00〜です。先方は10/22希望とのことです。"}]}, {"id": "T4", "st": "done", "kind": "確認", "date": "10/09", "due": "10/12", "title": "[パワーコンサルティング様] 依頼案件一覧の共有方法（岩田さん）", "thread": [{"c": "boss", "who": "藤本　10/10 10:02", "t": "【社長回答】スプレッドシートの共有でOK。"}]}], "detail": {"date": "2026年10月13日（火）", "id": "R20261013-002", "daily": [["本日の業務内容", "・見積作成\n・長谷川先生ロープレ 営業リストまとめ\n・低価格顧客一覧表の作成"], ["案件ごとの進捗", "鈴木建築設計様 八千代市 幼稚園建替え 現況測量\n先方より金額交渉の依頼あり（相談1へ）"]], "consults": [0, 1]}}}};
 const PEOPLE={
-  hakkaku:{name:"八角",dept:"営業部",form:"sales",project:"営業部"},
-  iwata:{name:"岩田",dept:"営業部",form:"sales",project:"営業部"},
-  mikawa:{name:"三川",dept:"総務部",form:"soumu",project:"総務部"},
-  mori:{name:"森",dept:"総務部",form:"soumu",project:"総務部"},
-  oono:{name:"大野",dept:"管理部",form:"soumu",project:"管理部【大野】"},
-  fujiwara:{name:"藤原",dept:"管理部",form:"kanri",project:"管理部【藤原】"},
-  mukai:{name:"向井",dept:"不動産事業部",form:"fudosan",project:"不動産事業部"},
-  fujimoto:{name:"藤本",dept:"社長",form:"sales",project:"BEACONテスト",admin:true}
-};
-const FORMS={
-  sales:{label:"営業報告",fields:[
-    {id:"work",t:"本日の業務内容",ph:"・見積作成\n・長谷川先生ロープレ\n・営業リストまとめ"}],
-    progress:{t:"案件ごとの進捗",name:"案件名",nph:"ＪＴＭ様 表題登記",body:"内容",bph:"依頼4件は昨日すべて申請済み。新規1件（地目変更・表題登記）は本日見積送付済み。"}},
-  soumu:{label:"業務報告",fields:[
-    {id:"work",t:"業務実績",ph:"・会計事務所質問事項対応\n・20日締め請求書作成開始\n・勤怠確認"},
-    {id:"report",t:"ご報告事項",ph:"・社用車の整備は部品交換が必要で、早くて11月上旬とのこと（三井住友ファイナンス＆リース 岸様より）"}]},
-  kanri:{label:"業務報告（案）",fields:[
-    {id:"work",t:"業務実績",ph:"・定例会議\n・各部の進捗確認"},
-    {id:"report",t:"ご報告事項",ph:"・社長に知っておいてほしいこと"},
-    {id:"cross",t:"部署間の調整・共有事項",ph:"・営業部と現場で、○○様案件の担当を調整済み"}]},
-  fudosan:{label:"業務報告（案）",fields:[
-    {id:"work",t:"業務実績",ph:"・物件調査\n・仲介先との打合せ"},
-    {id:"report",t:"ご報告事項",ph:"・社長に知っておいてほしいこと"}],
-    progress:{t:"案件ごとの進捗",name:"物件・案件名",nph:"船橋市○○ 土地売却",body:"状況",bph:"買主側から価格の打診あり。来週回答予定。"}}
+  hakkaku:{name:"八角",dept:"営業部",project:"営業部"},
+  iwata:{name:"岩田",dept:"営業部",project:"営業部"},
+  mikawa:{name:"三川",dept:"総務部",project:"総務部"},
+  mori:{name:"森",dept:"総務部",project:"総務部"},
+  oono:{name:"大野",dept:"管理部",project:"管理部【大野】"},
+  fujiwara:{name:"藤原",dept:"管理部（執行役員）",project:"管理部【藤原】"},
+  mukai:{name:"向井",dept:"不動産事業部",project:"不動産事業部"},
+  fujimoto:{name:"藤本",dept:"社長",project:"BEACONテスト",admin:true}
 };
 const KINDS=[["判断","社長に決めてもらう"],["確認","内容を見てOKをもらう"],["共有のみ","知らせるだけ。Todoistには起票しない"]];
+const SAMPLE=w=>CFG.samples[w]||CFG.samples[CFG.people[0]];
 
 let daily={};
-let state={who:"iwata",tab:"write",step:"form",filter:"all",consults:[],progress:1,openAns:null,confirmDone:null,boss:"reports"};
+let state={who:CFG.people[0],tab:CFG.startTab||"write",step:"form",filter:"all",consults:[],progress:1,openAns:null,boss:"reports"};
 function newConsult(seed){return Object.assign({kind:"判断",what:"",to:"",bg:"",due:"",link:""},seed||{});}
-function resetForm(){
-  state.consults=[newConsult({what:"見積を450,000円→400,000円に修正して提出してよいか",to:"鈴木建築設計様／八千代市 幼稚園建替え 現況測量",
-    bg:"先方より金額交渉の依頼あり。現在の見積は450,000円（現地測量380,000円〜、真北測量20,000円、2断面図10,000円、用途地域境界調査40,000円）。藤原さんには確認済み。営業訪問は10/21(水)10:00〜。",due:"",link:""}),
-    newConsult({kind:"確認",what:"10/19(月)10:00〜 高山様（幕張展示場）訪問は現地集合でよいか",to:"高山様／幕張展示場 訪問",bg:"",due:"2026-10-16",link:""})];
-  state.progress=1;state.step="form";daily={};
-}
+function resetForm(){state.consults=SAMPLE(state.who).consults.map(c=>newConsult(c));state.progress=1;state.step="form";daily={};}
 resetForm();
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const me=()=>PEOPLE[state.who];
+const form=()=>CFG.forms[state.who]||CFG.form;
 const TODAY=new Date(2026,9,15);
 const WD="日月火水木金土";
 const jdate=d=>`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）`;
 const sdate=d=>`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}`;
 function nextBiz(d){const x=new Date(d);do{x.setDate(x.getDate()+1)}while(x.getDay()===0||x.getDay()===6);return x;}
 
+function initBar(){
+  $("#mockName").textContent=CFG.mockName;
+  if(CFG.people.length<2){$("#whoWrap").innerHTML=`ログイン中：${esc(PEOPLE[CFG.people[0]].name)}さん`;return;}
+  $("#who").innerHTML=CFG.people.map(k=>`<option value="${k}">${esc(PEOPLE[k].name)}さん</option>`).join("");
+  $("#who").addEventListener("change",e=>{state.who=e.target.value;state.openAns=null;resetForm();render();});
+}
 function tabsFor(){const t=[["write","報告を書く"],["mine","自分の相談"],["detail","報告の詳細"]];if(me().admin)t.push(["boss","社長用"]);return t;}
 function renderShell(){
   const p=me();
   $("#whoLine").innerHTML=`${esc(p.name)}さん　<span class="tag dept" style="background:rgba(255,255,255,.14);color:#fff">${esc(p.dept)}</span>`+(p.admin?`　<span style="font-size:11px">テストは「BEACONテスト」プロジェクトに起票</span>`:"");
-  if(!tabsFor().some(t=>t[0]===state.tab))state.tab="write";
   $("#tabs").innerHTML=tabsFor().map(([k,l])=>`<button role="tab" aria-selected="${state.tab===k}" data-tab="${k}">${l}</button>`).join("");
 }
 function render(){renderShell();({write:renderWrite,mine:renderMine,detail:renderDetail,boss:renderBoss})[state.tab]();}
@@ -237,13 +213,15 @@ function render(){renderShell();({write:renderWrite,mine:renderMine,detail:rende
 function renderWrite(){
   if(state.step==="confirm")return renderConfirm();
   if(state.step==="sent")return renderSent();
-  const p=me(),f=FORMS[p.form];
-  let h=`<div class="date">${jdate(TODAY)}<span class="sub">${esc(f.label)}</span></div>
-  <div class="sec-title"><h2>日報</h2><span>空欄の項目は送られません</span></div>
-  <section class="card">`+f.fields.map(x=>`<div class="field"><label for="d_${x.id}">【${esc(x.t)}】</label><textarea id="d_${x.id}" placeholder="${esc(x.ph)}"></textarea></div>`).join("");
+  const f=form(),s=SAMPLE(state.who);
+  let h=`<div class="date">${jdate(TODAY)}<span class="sub">${esc(f.label)}</span></div>`;
+  if(s.note)h+=`<div class="sharenote">${esc(s.note)}</div>`;
+  h+=`<div class="sec-title"><h2>日報</h2><span>空欄の項目は送られません</span></div>
+  <section class="card">`+f.fields.map(x=>`<div class="field"><label for="d_${x.id}">【${esc(x.t)}】</label>${x.hint?`<span class="hint">${esc(x.hint)}</span>`:""}<textarea id="d_${x.id}" placeholder="${esc((s.ph||{})[x.id]||x.ph||"")}"></textarea></div>`).join("");
   if(f.progress){
-    h+=`<div class="field"><span class="lbl">【${esc(f.progress.t)}】<span class="opt">案件ごとに1件</span></span>`;
-    for(let i=0;i<state.progress;i++)h+=`<div class="progress-item"><input type="text" id="pg_n${i}" placeholder="${esc(f.progress.name)}（例：${esc(f.progress.nph)}）"><textarea id="pg_b${i}" placeholder="${esc(f.progress.bph)}" style="min-height:64px"></textarea></div>`;
+    const pg=f.progress,ex=s.progress||pg;
+    h+=`<div class="field"><span class="lbl">【${esc(pg.t)}】<span class="opt">案件ごとに1件</span></span>`;
+    for(let i=0;i<state.progress;i++)h+=`<div class="progress-item"><input type="text" id="pg_n${i}" placeholder="${esc(pg.name)}（例：${esc(ex.nph)}）"><textarea id="pg_b${i}" placeholder="${esc(ex.bph)}" style="min-height:64px"></textarea></div>`;
     h+=`<button class="linkbtn" data-act="addprog" style="align-self:flex-start">＋案件を追加</button></div>`;
   }
   h+=`</section>
@@ -263,24 +241,24 @@ function consultCard(c,i){
       <div class="seg" role="group" aria-label="相談の種類">${KINDS.map(([k])=>`<button aria-pressed="${c.kind===k}" data-act="kind" data-i="${i}" data-k="${k}">${k}</button>`).join("")}</div>
       <span class="hint">${esc(KINDS.find(k=>k[0]===c.kind)[1])}</span></div>
     ${share?`<div class="sharenote">共有のみは記録だけ残ります。社長の回答待ちにはなりません。</div>`:""}
-    <div class="field"><label for="c_what${i}">何を決めてほしいか<span class="req">必須</span></label>
-      <input type="text" id="c_what${i}" data-k="what" data-i="${i}" value="${esc(c.what)}" placeholder="例：見積を40万円に修正して提出してよいか">
-      <span class="hint">1行で。Todoistのタイトルになります</span></div>
+    <div class="field"><label for="c_what${i}">${share?"何を知らせるか":"何を決めてほしいか"}<span class="req">必須</span></label>
+      <input type="text" id="c_what${i}" data-k="what" data-i="${i}" value="${esc(c.what)}" placeholder="1行で書いてください">
+      <span class="hint">${share?"記録の見出しになります":"1行で。Todoistのタイトルになります"}</span></div>
     <div class="field"><label for="c_to${i}">相手先・件名<span class="opt">推奨</span></label>
-      <input type="text" id="c_to${i}" data-k="to" data-i="${i}" value="${esc(c.to)}" placeholder="例：鈴木建築設計様／八千代市 現況測量"></div>
+      <input type="text" id="c_to${i}" data-k="to" data-i="${i}" value="${esc(c.to)}" placeholder="例：○○様／船橋市 確定測量"></div>
     <div class="field"><label for="c_bg${i}">背景・事実<span class="opt">推奨：金額・日付・相手の名前</span></label>
       <textarea id="c_bg${i}" data-k="bg" data-i="${i}" placeholder="経緯、金額、日付、相手の名前など">${esc(c.bg)}</textarea></div>
     <div class="row2">
       <div class="field"><label for="c_due${i}">期限<span class="opt">任意</span></label>
         <input type="date" id="c_due${i}" data-k="due" data-i="${i}" value="${esc(c.due)}">
-        ${share?"":`<span class="hint">${c.due?"":"空欄なら "+sdate(nextBiz(TODAY))+"（翌営業日）を仮期限にします"}</span>`}</div>
+        ${share||c.due?"":`<span class="hint">空欄なら ${sdate(nextBiz(TODAY))}（翌営業日）を仮期限にします</span>`}</div>
       <div class="field"><label for="c_link${i}">資料のリンク<span class="opt">任意</span></label>
         <input type="url" id="c_link${i}" data-k="link" data-i="${i}" value="${esc(c.link)}" placeholder="Googleドライブのリンク"></div>
     </div>
   </section>`;
 }
 
-function taskTitle(c,p){return `${c.to?`[${c.to}] `:""}${c.what||"（何を決めてほしいかが未入力）"}（${p.name}さん）`;}
+function taskTitle(c,p){return `${c.to?`[${c.to}] `:""}${c.what||"（未入力）"}（${p.name}さん）`;}
 function taskDesc(c,p,id){
   const due=c.due?c.due.replace(/-/g,"/"):`${sdate(nextBiz(TODAY))}（報告に期限の記載なし → 仮期限）`;
   return `【何を判断するか／担当：藤本さん】\n${c.what}\n【種類】${c.kind}\n【背景】\n${c.bg||"（記載なし）"}\n【誰に返すか】${p.name}さん\n【期限】${due}\n【資料】${c.link||"なし"}\n【出典】BEACON ${sdate(TODAY)} ${p.name}\nhttps://script.google.com/a/macros/landex-ltd.com/s/…/exec?r=${id}`;
@@ -290,9 +268,9 @@ function renderConfirm(){
   let h=`<div class="date">送る前の確認</div>
   <p class="hint">下の内容で記録し、相談はTodoistの「${esc(p.project)}」の📥社長がやる に起票します。</p>`;
   const bad=state.consults.filter(c=>!c.what.trim());
-  if(bad.length)h+=`<div class="inline-confirm" style="border-color:var(--vermilion)">「何を決めてほしいか」が空の相談が${bad.length}件あります。戻って入力してください。</div>`;
+  if(bad.length)h+=`<div class="inline-confirm">1行目が空の相談が${bad.length}件あります。戻って入力してください。</div>`;
   state.consults.forEach((c,i)=>{
-    const id=`R20261015-00${3}-${i+1}`;
+    const id=`R20261015-004`;
     if(c.kind==="共有のみ"){h+=`<div class="preview"><div class="preview-h"><span>相談 ${i+1}：共有のみ</span><span>Todoistには起票しません</span></div><div class="preview-b"><div class="ptitle">${esc(c.what)}</div><div class="c-meta">${esc(c.to)}</div></div></div>`;return;}
     h+=`<div class="preview"><div class="preview-h"><span>相談 ${i+1}：Todoistに起票される形</span><span>${esc(p.project)} ／ 📥社長がやる</span></div>
       <div class="preview-b"><div class="ptitle">${esc(taskTitle(c,p))}</div>
@@ -303,27 +281,19 @@ function renderConfirm(){
   setBottom(`<button class="btn ghost" data-act="back">戻って直す</button><button class="btn primary" data-act="send" ${bad.length?"disabled style='opacity:.5'":""}>報告を送る</button>`);
 }
 function renderSent(){
-  const n=state.consults.filter(c=>c.kind!=="共有のみ").length;
+  const n=state.consults.filter(c=>c.kind!=="共有のみ").length,sh=state.consults.length-n;
   $("#main").innerHTML=`<div class="card done-msg"><div class="mark">送信しました</div>
-    <div>日報を記録し、相談${n}件をTodoistの📥社長がやる に起票しました。</div>
-    <div class="hint">報告ID R20261015-003　／　回答は「自分の相談」で見られます</div></div>
+    <div>日報を記録し、相談${n}件をTodoistの📥社長がやる に起票しました。${sh?`共有${sh}件は記録だけ残しました。`:""}</div>
+    <div class="hint">報告ID R20261015-004　／　回答は「自分の相談」で見られます</div></div>
     <div class="card"><div class="c-top"><span class="status fail">起票失敗の例</span></div>
     <div style="font-size:14px">Todoistにつながらず起票できなかった場合は、ここに表示し、藤本さんにもメールで知らせます。報告そのものは保存されています。</div></div>`;
   setBottom(`<button class="btn ghost" data-act="tomine">自分の相談を見る</button><button class="btn primary" data-act="again">新しい報告を書く</button>`);
 }
 
 /* ---------- 自分の相談 ---------- */
-const MINE=[
-  {id:"T1",st:"ans",title:"[鈴木建築設計様／八千代市 幼稚園建替え] 見積を450,000円→400,000円に修正して提出してよいか（岩田さん）",date:"10/13",due:"10/14",kind:"判断",
-   thread:[{c:"boss",who:"藤本　10/14 9:12",t:"【社長回答】400,000円で提出してOKです。ただし、遊具のプロットは別途にする旨を備考に入れてください。"}]},
-  {id:"T2",st:"wait",title:"[高山様／幕張展示場 訪問] 10/19(月)10:00〜 現地集合でよいか（岩田さん）",date:"10/13",due:"10/14",kind:"確認",overdue:true,thread:[]},
-  {id:"T3",st:"wait",title:"[ホームワーク様／世田谷区太子堂] 打合せ日程 10/22・10/23・10/26 のどれで返すか（岩田さん）",date:"10/14",due:"10/15",kind:"判断",
-   thread:[{c:"boss",who:"藤本　10/14 15:40",t:"【社長差し戻し】候補日の時間帯も書いてください。"},{c:"follow",who:"岩田（BEACON）　10/15 8:50",t:"【続報：BEACON 2026/10/15 岩田】\n3日とも10:00〜です。先方は10/22希望とのことです。"}]},
-  {id:"T4",st:"done",title:"[パワーコンサルティング様] 依頼案件一覧の共有方法（岩田さん）",date:"10/09",due:"10/12",kind:"確認",
-   thread:[{c:"boss",who:"藤本　10/10 10:02",t:"【社長回答】スプレッドシートの共有でOK。"}]}
-];
 const ST={wait:["回答待ち","wait"],ans:["回答あり","ans"],done:["完了","done"]};
 function renderMine(){
+  const MINE=SAMPLE(state.who).mine;
   const cnt=k=>k==="all"?MINE.length:MINE.filter(m=>m.st===k).length;
   let h=`<div class="filters">${[["all","すべて"],["ans","回答あり"],["wait","回答待ち"],["done","完了"]].map(([k,l])=>`<button class="chip" aria-pressed="${state.filter===k}" data-act="filter" data-f="${k}">${l}<span class="n">${cnt(k)}</span></button>`).join("")}</div>
   <p class="hint">状態はTodoistから読み込んでいます（最終更新 10:05）。</p>`;
@@ -348,26 +318,24 @@ function renderMine(){
 
 /* ---------- 報告の詳細（出典リンクの行き先） ---------- */
 function renderDetail(){
-  $("#main").innerHTML=`<div class="date">2026年10月13日（火）<span class="sub">岩田さん・営業報告</span></div>
-  <p class="hint">Todoistの【出典】リンクから開く画面です（報告ID R20261013-002）。</p>
-  <section class="card daily-view"><dl style="margin:0">
-    <dt>【本日の業務内容】</dt><dd>・見積作成\n・長谷川先生ロープレ 営業リストまとめ\n・低価格顧客一覧表の作成</dd>
-    <dt>【案件ごとの進捗】</dt><dd>鈴木建築設計様 八千代市 幼稚園建替え 現況測量
-先方より金額交渉の依頼あり（相談1へ）</dd></dl></section>
-  <div class="sec-title"><h2>相談</h2><span>2件</span></div>
-  ${MINE.slice(0,2).map(m=>`<section class="card"><div class="c-top"><span class="status ${ST[m.st][1]}">${ST[m.st][0]}</span><span class="tag kind">${m.kind}</span></div><div class="c-title">${esc(m.title)}</div><div class="c-meta">TodoistタスクID 8812345${m.id.slice(1)}　<a href="#" style="color:var(--dept)">Todoistで開く</a></div></section>`).join("")}`;
+  const s=SAMPLE(state.who),d=s.detail,p=me();
+  $("#main").innerHTML=`<div class="date">${esc(d.date)}<span class="sub">${esc(p.name)}さん・${esc(form().label)}</span></div>
+  <p class="hint">Todoistの【出典】リンクから開く画面です（報告ID ${esc(d.id)}）。</p>
+  <section class="card daily-view"><dl style="margin:0">${d.daily.map(([t,b])=>`<dt>【${esc(t)}】</dt><dd>${esc(b)}</dd>`).join("")}</dl></section>
+  <div class="sec-title"><h2>相談</h2><span>${d.consults.length}件</span></div>
+  ${d.consults.map(i=>s.mine[i]).map(m=>`<section class="card"><div class="c-top"><span class="status ${ST[m.st][1]}">${ST[m.st][0]}</span><span class="tag kind">${m.kind}</span></div><div class="c-title">${esc(m.title)}</div><div class="c-meta">TodoistタスクID 88123450${m.id.slice(1)}　<a href="#" style="color:var(--dept)">Todoistで開く</a></div></section>`).join("")}`;
   setBottom(null);
 }
 
 /* ---------- 社長用 ---------- */
 function renderBoss(){
-  const rep=[["10/15 8:50","岩田","営業部","続報1件","—"],["10/14 17:55","八角","営業部","日報","—"],["10/14 18:02","大野","管理部","日報＋相談3","起票済"],["10/14 17:54","岩田","営業部","日報＋相談1","起票済"],["10/14 12:57","森","総務部","日報＋相談1","起票済"],["10/13 15:10","三川","総務部","日報＋共有1","—"]];
+  const rep=[["10/15 8:50","岩田","営業部","続報1件","—"],["10/14 18:10","藤原","管理部","日報＋相談1","起票済"],["10/14 18:02","大野","管理部","日報＋相談3","1件失敗"],["10/14 17:58","向井","不動産事業部","日報＋相談1","起票済"],["10/14 17:55","八角","営業部","日報＋相談1＋共有1","起票済"],["10/14 17:54","岩田","営業部","日報＋相談1","起票済"],["10/14 12:57","森","総務部","日報＋相談1","起票済"],["10/13 15:10","三川","総務部","日報＋共有1","—"]];
   $("#main").innerHTML=`<div class="filters">${[["reports","全員の報告"],["fails","起票の失敗"]].map(([k,l])=>`<button class="chip" aria-pressed="${state.boss===k}" data-act="boss" data-b="${k}">${l}${k==="fails"?`<span class="n">1</span>`:""}</button>`).join("")}</div>`+
   (state.boss==="reports"?`<section class="card"><div class="tbl-wrap"><table><thead><tr><th>日時</th><th>報告者</th><th>部署</th><th>内容</th><th>起票</th></tr></thead><tbody>
-    ${rep.map(r=>`<tr><td class="num">${r[0]}</td><td>${r[1]}</td><td><span class="tag dept">${r[2]}</span></td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join("")}</tbody></table></div>
+    ${rep.map(r=>`<tr><td class="num">${r[0]}</td><td>${r[1]}</td><td><span class="tag dept">${r[2]}</span></td><td>${r[3]}</td><td>${r[4]==="1件失敗"?`<span class="status fail">${r[4]}</span>`:r[4]}</td></tr>`).join("")}</tbody></table></div>
     <p class="hint" style="margin:0">見るだけの画面です。回答はこれまでどおりClaudeの社長回答コメントスキルで行います。</p></section>`
   :`<section class="card"><div class="c-top"><span class="status fail">起票失敗</span><span class="c-meta">10/14 18:02 大野さん</span></div>
-    <div class="c-title">[三井住友銀行] 給与振込の限度額を銀行で変更してよいか（大野さん）</div>
+    <div class="c-title">[銀行／給与振込] 振込限度額を銀行で変更してよいか（大野さん）</div>
     <pre class="desc">Todoist API 503 Service Unavailable（3回再試行して失敗）</pre>
     <div class="actions"><button class="btn primary small">もう一度起票する</button></div></section>`);
   setBottom(null);
@@ -396,8 +364,7 @@ document.addEventListener("click",e=>{
   else return;
   e.preventDefault();render();
 });
-document.addEventListener("input",e=>{const el=e.target;if(/^(d_|pg_)/.test(el.id))daily[el.id]=el.value;if(el.dataset.k&&el.dataset.i!==undefined&&state.consults[+el.dataset.i]){state.consults[+el.dataset.i][el.dataset.k]=el.value;}});
+document.addEventListener("input",e=>{const el=e.target;if(/^(d_|pg_)/.test(el.id))daily[el.id]=el.value;if(el.dataset.k&&el.dataset.i!==undefined&&state.consults[+el.dataset.i])state.consults[+el.dataset.i][el.dataset.k]=el.value;});
 document.addEventListener("change",e=>{if(e.target.dataset.k==="due"&&state.tab==="write")render();});
-$("#who").addEventListener("change",e=>{state.who=e.target.value;state.openAns=null;resetForm();render();});
-render();
+initBar();render();
 </script>
