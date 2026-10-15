@@ -1,0 +1,224 @@
+<script>
+(function () {
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const WD = '日月火水木金土';
+  const ymdToDate = ymd => { const [y, m, d] = ymd.split('-').map(Number); return new Date(y, m - 1, d); };
+  const jdate = ymd => { const d = ymdToDate(ymd); return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）`; };
+  const slash = ymd => (ymd || '').replace(/-/g, '/');
+  const KIND_HINT = { '判断': '社長に決めてもらう', '確認': '内容を見てOKをもらう', '共有のみ': '知らせるだけ。Todoistには起票しない' };
+  // 日報の中にある「社長への相談らしい文」を見つける決まり文句（AIは使わない）
+  const ASK_WORDS = ['よろしいでしょうか', 'よろしいですか', 'いかがでしょうか', 'ご確認ください', 'ご確認お願い', 'ご確認をお願い', 'ご判断', '押印', 'してもよい', 'してよい', 'どうしますか', 'どうしましょう', 'ご指示'];
+
+  if (!CTX.allowed) {
+    $('#main').innerHTML = `<div class="card"><div class="notice err">${esc(CTX.message)}</div></div>`;
+    return;
+  }
+
+  let state = { who: CTX.people[0].key, step: 'form', consults: [], progress: 1, daily: {}, skipped: [], sending: false, result: null, error: '' };
+  const me = () => CTX.people.find(p => p.key === state.who);
+  const form = () => CTX.forms[state.who];
+  const newConsult = () => ({ kind: '判断', what: '', to: '', bg: '', due: '', link: '' });
+
+  // 書きかけを端末に残す（送信できたら消す）
+  const draftKey = () => 'lb-draft-' + state.who;
+  function saveDraft() {
+    try { localStorage.setItem(draftKey(), JSON.stringify({ day: CTX.today, consults: state.consults, progress: state.progress, daily: state.daily })); } catch (e) {}
+  }
+  function loadDraft() {
+    state.consults = []; state.progress = 1; state.daily = {}; state.skipped = [];
+    try {
+      const d = JSON.parse(localStorage.getItem(draftKey()) || 'null');
+      if (d && d.day === CTX.today) { state.consults = d.consults || []; state.progress = d.progress || 1; state.daily = d.daily || {}; }
+    } catch (e) {}
+  }
+  function clearDraft() { try { localStorage.removeItem(draftKey()); } catch (e) {} }
+
+  function initBar() {
+    if (!CTX.isBoss) return;
+    $('#testBar').hidden = false;
+    $('#who').innerHTML = CTX.people.map(p => `<option value="${p.key}">${esc(p.name)}さん（${esc(p.dept)}）</option>`).join('');
+    $('#who').addEventListener('change', e => { state.who = e.target.value; state.step = 'form'; state.result = null; state.error = ''; loadDraft(); render(); });
+  }
+
+  function renderShell() {
+    const p = me();
+    $('#whoLine').innerHTML = `${esc(p.name)}さん　<span class="tag dept" style="background:rgba(255,255,255,.14);color:#fff">${esc(p.dept)}</span>` +
+      (CTX.isBoss ? '　<span style="font-size:11px">テスト中</span>' : '');
+    $('#tabs').innerHTML = `<button role="tab" aria-selected="true">報告を書く</button>`;
+  }
+  function render() {
+    renderShell();
+    if (state.step === 'confirm') return renderConfirm();
+    if (state.step === 'sent') return renderSent();
+    renderForm();
+  }
+
+  /* ---------- 入力 ---------- */
+  function renderForm() {
+    const f = form();
+    let h = `<div class="date">${jdate(CTX.today)}<span class="sub">${esc(f.label)}</span></div>`;
+    if (f.note) h += `<div class="sharenote">${esc(f.note)}</div>`;
+    if (state.error) h += `<div class="notice err">${esc(state.error)}</div>`;
+    h += `<div class="sec-title"><h2>日報</h2><span>空欄の項目は送られません</span></div><section class="card">` +
+      f.fields.map(x => `<div class="field"><label for="d_${x.id}">【${esc(x.t)}】</label>${x.hint ? `<span class="hint">${esc(x.hint)}</span>` : ''}<textarea id="d_${x.id}" placeholder="${esc(x.ph || '')}"></textarea></div>`).join('');
+    if (f.progress) {
+      h += `<div class="field"><span class="lbl">【${esc(f.progress.t)}】<span class="opt">案件ごとに1件</span></span>`;
+      for (let i = 0; i < state.progress; i++) h += `<div class="progress-item"><input type="text" id="pg_n${i}" placeholder="${esc(f.progress.name)}"><textarea id="pg_b${i}" placeholder="${esc(f.progress.ph)}" style="min-height:64px"></textarea></div>`;
+      h += `<button class="linkbtn" data-act="addprog" style="align-self:flex-start">＋案件を追加</button></div>`;
+    }
+    h += `</section><div class="sec-title"><h2>社長への確認・相談</h2><span>1件ずつ入力</span></div>`;
+    state.consults.forEach((c, i) => { h += consultCard(c, i); });
+    h += `<button class="addbtn" data-act="addc">＋相談を追加</button>
+      <p class="hint">続きの話は、新しい相談にせず、Todoistのそのタスクにコメントしてください。</p>`;
+    $('#main').innerHTML = h;
+    Object.keys(state.daily).forEach(k => { const el = document.getElementById(k); if (el) el.value = state.daily[k]; });
+    setBottom(`<button class="btn primary" data-act="toconfirm">内容を確認する</button>`);
+  }
+
+  function consultCard(c, i) {
+    const share = c.kind === '共有のみ';
+    return `<section class="card">
+      <div class="consult-head"><h3>相談 ${i + 1}</h3><button class="linkbtn" data-act="delc" data-i="${i}">この相談を消す</button></div>
+      <div class="field"><span class="lbl">種類</span>
+        <div class="seg" role="group" aria-label="相談の種類">${CTX.kinds.map(k => `<button aria-pressed="${c.kind === k}" data-act="kind" data-i="${i}" data-k="${k}">${k}</button>`).join('')}</div>
+        <span class="hint">${esc(KIND_HINT[c.kind])}</span></div>
+      ${share ? '<div class="sharenote">共有のみは記録だけ残ります。社長の回答待ちにはなりません。</div>' : ''}
+      <div class="field"><label for="c_what${i}">${share ? '何を知らせるか' : '何を決めてほしいか'}<span class="req">必須</span></label>
+        <input type="text" id="c_what${i}" data-k="what" data-i="${i}" value="${esc(c.what)}" placeholder="1行で書いてください">
+        <span class="hint">${share ? '記録の見出しになります' : '1行で。Todoistのタイトルになります'}</span></div>
+      <div class="field"><label for="c_to${i}">相手先・件名<span class="opt">推奨</span></label>
+        <input type="text" id="c_to${i}" data-k="to" data-i="${i}" value="${esc(c.to)}" placeholder="例：○○様／船橋市 確定測量"></div>
+      <div class="field"><label for="c_bg${i}">背景・事実<span class="opt">推奨：金額・日付・相手の名前</span></label>
+        <textarea id="c_bg${i}" data-k="bg" data-i="${i}" placeholder="経緯、金額、日付、相手の名前など">${esc(c.bg)}</textarea></div>
+      <div class="row2">
+        <div class="field"><label for="c_due${i}">期限<span class="opt">任意</span></label>
+          <input type="date" id="c_due${i}" data-k="due" data-i="${i}" value="${esc(c.due)}">
+          ${share || c.due || !CTX.defaultDue ? '' : `<span class="hint">空欄なら ${slash(CTX.defaultDue)}（翌営業日）を仮期限にします</span>`}</div>
+        <div class="field"><label for="c_link${i}">資料のリンク<span class="opt">任意</span></label>
+          <input type="url" id="c_link${i}" data-k="link" data-i="${i}" value="${esc(c.link)}" placeholder="Googleドライブのリンク"></div>
+      </div>
+    </section>`;
+  }
+
+  /* ---------- 送る前の確認 ---------- */
+  function payload() {
+    const f = form();
+    const daily = {};
+    f.fields.forEach(x => { daily[x.id] = state.daily['d_' + x.id] || ''; });
+    const progress = [];
+    for (let i = 0; i < state.progress; i++) progress.push({ name: state.daily['pg_n' + i] || '', body: state.daily['pg_b' + i] || '' });
+    return { asKey: state.who, daily, progress, consults: state.consults };
+  }
+  function findAsks() {
+    const out = [];
+    Object.values(state.daily).forEach(v => (v || '').split(/\n/).forEach(line => {
+      const t = line.replace(/^[・\s]+/, '').trim();
+      if (t && !state.skipped.includes(t) && !out.includes(t) && ASK_WORDS.some(w => t.includes(w)) &&
+          !state.consults.some(c => c.what && t.includes(c.what.slice(0, 8)))) out.push(t);
+    }));
+    return out;
+  }
+  function taskTitle(c) { return `${c.to ? `[${c.to}] ` : ''}${c.what}（${me().name}さん）`; }
+  function taskDesc(c) {
+    const due = c.due ? slash(c.due) : `${slash(CTX.defaultDue)}（報告に期限の記載なし → 仮期限）`;
+    return ['【何を判断するか／担当：藤本さん】', c.what, '', '【種類】', c.kind, '', '【背景】', c.bg || '（記載なし）', '',
+      '【誰に返すか】', me().name + 'さん', '', '【期限】', due, '']
+      .concat(c.link ? ['【資料】', c.link, ''] : [])
+      .concat(['【出典】', `BEACON ${slash(CTX.today)} ${me().name}（報告ID は送信時に決まります）`, 'この日の日報はコメント欄にあります']).join('\n');
+  }
+  function problems() {
+    const out = [];
+    state.consults.forEach((c, i) => {
+      if (!c.what.trim()) out.push(`相談${i + 1}の1行目が空です`);
+      if (c.link && !/^https:\/\//.test(c.link)) out.push(`相談${i + 1}の資料のリンクは https:// で始まるURLにしてください`);
+    });
+    const p = payload();
+    const hasDaily = Object.values(p.daily).some(v => v.trim()) || p.progress.some(x => x.name.trim() || x.body.trim());
+    if (!hasDaily && !state.consults.length) out.push('日報か相談のどちらかを書いてください');
+    return out;
+  }
+  function renderConfirm() {
+    const p = me();
+    const bad = problems();
+    let h = `<div class="date">送る前の確認</div>
+      <p class="hint">下の内容で記録し、相談はTodoistの「${esc(p.project)}」の📥社長がやる に起票します。</p>`;
+    bad.forEach(b => { h += `<div class="notice err">${esc(b)}</div>`; });
+    findAsks().forEach(t => {
+      h += `<div class="inline-confirm" style="border-color:var(--wait);background:var(--wait-soft)">
+        <div><b>日報の中に、社長への相談らしい文があります。相談にしますか？</b></div><div>「${esc(t)}」</div>
+        <div class="hint">相談にしないと、社長のTodoistには届きません。</div>
+        <div class="actions"><button class="btn ghost small" data-act="skipask" data-t="${esc(t)}">このまま送る</button><button class="btn primary small" data-act="toask" data-t="${esc(t)}">相談にする</button></div></div>`;
+    });
+    if (!state.consults.length) h += `<div class="card"><div class="hint">相談はありません。日報だけを記録します。</div></div>`;
+    state.consults.forEach((c, i) => {
+      if (c.kind === '共有のみ') {
+        h += `<div class="preview"><div class="preview-h"><span>相談 ${i + 1}：共有のみ</span><span>Todoistには起票しません</span></div><div class="preview-b"><div class="ptitle">${esc(c.what)}</div><div class="c-meta">${esc(c.to)}</div></div></div>`;
+        return;
+      }
+      h += `<div class="preview"><div class="preview-h"><span>相談 ${i + 1}：Todoistに起票される形</span><span>${esc(p.project)} ／ 📥社長がやる</span></div>
+        <div class="preview-b"><div class="ptitle">${esc(taskTitle(c))}</div>
+        <div class="meta"><span>ラベル <b>📥社長がやる</b></span><span>優先度 <b>p1</b></span><span>担当 <b>藤本</b></span><span>期限 <b>${esc(slash(c.due || CTX.defaultDue))}</b></span></div>
+        <pre class="desc">${esc(taskDesc(c))}</pre></div></div>`;
+    });
+    $('#main').innerHTML = h;
+    setBottom(`<button class="btn ghost" data-act="back">戻って直す</button><button class="btn primary" data-act="send" ${bad.length || state.sending ? 'disabled' : ''}>${state.sending ? '<span class="spinner"></span>送信中' : '報告を送る'}</button>`);
+  }
+
+  function send() {
+    if (state.sending || problems().length) return;
+    state.sending = true; render();
+    google.script.run
+      .withSuccessHandler(res => { state.sending = false; state.result = res; state.step = 'sent'; state.error = ''; clearDraft(); render(); window.scrollTo(0, 0); })
+      .withFailureHandler(err => { state.sending = false; state.error = '送信できませんでした：' + (err && err.message || err) + '　書いた内容は残っています。もう一度「内容を確認する」から送ってください。'; state.step = 'form'; render(); window.scrollTo(0, 0); })
+      .LB_submitReport(payload());
+  }
+
+  /* ---------- 送信後 ---------- */
+  function renderSent() {
+    const r = state.result;
+    const filed = r.results.filter(x => x.status === '起票済').length;
+    const failed = r.results.filter(x => x.status === '起票失敗').length;
+    let h = `<div class="card done-msg"><div class="mark">送信しました</div>
+      <div>${r.results.length ? `相談${r.results.length}件のうち、${filed}件をTodoistに起票しました。` : '日報を記録しました。'}</div>
+      <div class="hint">報告ID ${esc(r.reportId)}</div></div>`;
+    if (r.results.length) {
+      h += `<section class="card">` + r.results.map(x => {
+        const st = x.status === '起票済' ? `<span class="status ans">起票済</span>` : x.status === '共有のみ' ? `<span class="status done">共有のみ</span>` : `<span class="status fail">起票失敗</span>`;
+        return `<div class="result-row"><div class="t">${esc(x.what)}${x.url ? `<br><a href="${esc(x.url)}" target="_blank" rel="noopener">Todoistで開く</a>` : ''}${x.note ? `<div class="hint">${esc(x.note)}</div>` : ''}</div>${st}</div>`;
+      }).join('') + `</section>`;
+    }
+    if (failed) h += `<div class="notice warn">Todoistに起票できなかった相談があります。報告は保存されています。BEACONが30分ごとに自動で起票し直し、それでも失敗したら藤本さんにメールで知らせます。もう一度送る必要はありません。</div>`;
+    $('#main').innerHTML = h;
+    setBottom(`<button class="btn primary" data-act="again">新しい報告を書く</button>`);
+  }
+
+  function setBottom(html) { const b = $('#bottom'); if (!html) { b.hidden = true; return; } b.hidden = false; $('#bottomIn').innerHTML = html; }
+
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-act]'); if (!t) return;
+    const a = t.dataset.act, i = +t.dataset.i;
+    if (a === 'addc') state.consults.push(newConsult());
+    else if (a === 'delc') state.consults.splice(i, 1);
+    else if (a === 'kind') state.consults[i].kind = t.dataset.k;
+    else if (a === 'addprog') state.progress++;
+    else if (a === 'toconfirm') { state.step = 'confirm'; window.scrollTo(0, 0); }
+    else if (a === 'back') state.step = 'form';
+    else if (a === 'send') return send();
+    else if (a === 'again') { state.step = 'form'; state.result = null; loadDraft(); }
+    else if (a === 'toask') { const c = newConsult(); c.what = t.dataset.t; state.consults.push(c); state.step = 'form'; }
+    else if (a === 'skipask') state.skipped.push(t.dataset.t);
+    else return;
+    e.preventDefault(); saveDraft(); render();
+  });
+  document.addEventListener('input', e => {
+    const el = e.target;
+    if (/^(d_|pg_)/.test(el.id)) state.daily[el.id] = el.value;
+    if (el.dataset.k && el.dataset.i !== undefined && state.consults[+el.dataset.i]) state.consults[+el.dataset.i][el.dataset.k] = el.value;
+    saveDraft();
+  });
+  document.addEventListener('change', e => { if (e.target.dataset.k === 'due' && state.step === 'form') render(); });
+
+  initBar(); loadDraft(); render();
+})();
+</script>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Shippori+Mincho:wght@600;700&display=swap">
+  <?!= LB_include_('Css') ?>
+</head>
+<body>
+  <div class="mockbar" id="testBar" hidden><div class="mockbar-in">
+    <strong style="color:var(--ink)">テスト</strong>
+    <label for="who">報告者として入力：<select id="who"></select></label>
+    <span class="mocknote">藤本さんの送信は、どの報告者を選んでもTodoistの「BEACONテスト」プロジェクトに起票します。</span>
+  </div></div>
+
+  <div class="app">
+    <header class="top">
+      <div class="brand"><h1>LANDEX BEACON</h1><small>L-BEACON</small></div>
+      <div class="who" id="whoLine"></div>
+      <nav class="tabs" role="tablist" id="tabs"></nav>
+    </header>
+    <main id="main"></main>
+  </div>
+  <div class="bottom" id="bottom" hidden><div class="bottom-in" id="bottomIn"></div></div>
+
+  <script>const CTX = <?!= ctxJson ?>;</script>
+  <?!= LB_include_('Js') ?>
+</body>
+</html>
