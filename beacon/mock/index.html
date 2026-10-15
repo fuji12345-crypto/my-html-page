@@ -188,10 +188,7 @@ const PEOPLE={
 };
 const FORMS={
   sales:{label:"営業報告",fields:[
-    {id:"work",t:"本日の業務内容",ph:"・見積作成\n・長谷川先生ロープレ\n・営業リストまとめ"},
-    {id:"order",t:"受注案件",ph:"・クレザック様（ケイアイスター桑折様よりご紹介）習志野市 確定測量"},
-    {id:"newreq",t:"新規見積依頼",ph:"・東洋不動産様 越谷市 確定・分筆"},
-    {id:"estimate",t:"見積作成",ph:"・神奈川住空間様 大和市 確定測量"}],
+    {id:"work",t:"本日の業務内容",ph:"・見積作成\n・長谷川先生ロープレ\n・営業リストまとめ"}],
     progress:{t:"案件ごとの進捗",name:"案件名",nph:"ＪＴＭ様 表題登記",body:"内容",bph:"依頼4件は昨日すべて申請済み。新規1件（地目変更・表題登記）は本日見積送付済み。"}},
   soumu:{label:"業務報告",fields:[
     {id:"work",t:"業務実績",ph:"・会計事務所質問事項対応\n・20日締め請求書作成開始\n・勤怠確認"},
@@ -355,7 +352,8 @@ function renderDetail(){
   <p class="hint">Todoistの【出典】リンクから開く画面です（報告ID R20261013-002）。</p>
   <section class="card daily-view"><dl style="margin:0">
     <dt>【本日の業務内容】</dt><dd>・見積作成\n・長谷川先生ロープレ 営業リストまとめ\n・低価格顧客一覧表の作成</dd>
-    <dt>【新規見積依頼】</dt><dd>・鈴木建築設計様 八千代市 幼稚園建替え 現況測量</dd></dl></section>
+    <dt>【案件ごとの進捗】</dt><dd>鈴木建築設計様 八千代市 幼稚園建替え 現況測量
+先方より金額交渉の依頼あり（相談1へ）</dd></dl></section>
   <div class="sec-title"><h2>相談</h2><span>2件</span></div>
   ${MINE.slice(0,2).map(m=>`<section class="card"><div class="c-top"><span class="status ${ST[m.st][1]}">${ST[m.st][0]}</span><span class="tag kind">${m.kind}</span></div><div class="c-title">${esc(m.title)}</div><div class="c-meta">TodoistタスクID 8812345${m.id.slice(1)}　<a href="#" style="color:var(--dept)">Todoistで開く</a></div></section>`).join("")}`;
   setBottom(null);
