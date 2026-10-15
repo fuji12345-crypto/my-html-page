@@ -180,9 +180,9 @@ const KINDS=[["判断","社長に決めてもらう"],["確認","内容を見て
 const SAMPLE=w=>CFG.samples[w]||CFG.samples[CFG.people[0]];
 
 let daily={};
-let state={who:CFG.people[0],tab:CFG.startTab||"write",step:"form",filter:"all",consults:[],progress:1,openAns:null,boss:"reports"};
+let state={who:CFG.people[0],tab:CFG.startTab||"write",step:"form",filter:"all",consults:[],progress:1,openAns:null,skipped:[]};
 function newConsult(seed){return Object.assign({kind:"判断",what:"",to:"",bg:"",due:"",link:""},seed||{});}
-function resetForm(){state.consults=SAMPLE(state.who).consults.map(c=>newConsult(c));state.progress=1;state.step="form";daily={};}
+function resetForm(){const s=SAMPLE(state.who);state.consults=s.consults.map(c=>newConsult(c));state.progress=1;state.step="form";state.skipped=[];daily={};Object.entries(s.ph||{}).forEach(([k,v])=>daily["d_"+k]=v);}
 resetForm();
 
 const $=s=>document.querySelector(s);
@@ -201,13 +201,13 @@ function initBar(){
   $("#who").innerHTML=CFG.people.map(k=>`<option value="${k}">${esc(PEOPLE[k].name)}さん</option>`).join("");
   $("#who").addEventListener("change",e=>{state.who=e.target.value;state.openAns=null;resetForm();render();});
 }
-function tabsFor(){const t=[["write","報告を書く"],["mine","自分の相談"],["detail","報告の詳細"]];if(me().admin)t.push(["boss","社長用"]);return t;}
+function tabsFor(){return [["write","報告を書く"],["mine","自分の相談"],["detail","過去の報告"]];}
 function renderShell(){
   const p=me();
   $("#whoLine").innerHTML=`${esc(p.name)}さん　<span class="tag dept" style="background:rgba(255,255,255,.14);color:#fff">${esc(p.dept)}</span>`+(p.admin?`　<span style="font-size:11px">テストは「BEACONテスト」プロジェクトに起票</span>`:"");
   $("#tabs").innerHTML=tabsFor().map(([k,l])=>`<button role="tab" aria-selected="${state.tab===k}" data-tab="${k}">${l}</button>`).join("");
 }
-function render(){renderShell();({write:renderWrite,mine:renderMine,detail:renderDetail,boss:renderBoss})[state.tab]();}
+function render(){renderShell();({write:renderWrite,mine:renderMine,detail:renderDetail})[state.tab]();}
 
 /* ---------- 報告を書く ---------- */
 function renderWrite(){
@@ -261,7 +261,13 @@ function consultCard(c,i){
 function taskTitle(c,p){return `${c.to?`[${c.to}] `:""}${c.what||"（未入力）"}（${p.name}さん）`;}
 function taskDesc(c,p,id){
   const due=c.due?c.due.replace(/-/g,"/"):`${sdate(nextBiz(TODAY))}（報告に期限の記載なし → 仮期限）`;
-  return `【何を判断するか／担当：藤本さん】\n${c.what}\n【種類】${c.kind}\n【背景】\n${c.bg||"（記載なし）"}\n【誰に返すか】${p.name}さん\n【期限】${due}\n【資料】${c.link||"なし"}\n【出典】BEACON ${sdate(TODAY)} ${p.name}\nhttps://script.google.com/a/macros/landex-ltd.com/s/…/exec?r=${id}`;
+  return `【何を判断するか／担当：藤本さん】\n${c.what}\n【種類】${c.kind}\n【背景】\n${c.bg||"（記載なし）"}\n【誰に返すか】${p.name}さん\n【期限】${due}\n【資料】${c.link||"なし"}\n【出典】BEACON ${sdate(TODAY)} ${p.name}（報告ID ${id}）\n※この日の日報はタスクの最初のコメントに付けています`;
+}
+const ASK_WORDS=["よろしいでしょうか","よろしいですか","いかがでしょうか","ご確認ください","ご確認お願い","ご確認をお願い","ご判断","押印","してもよい","してよい","どうしますか","どうしましょう","ご指示"];
+function findAsks(){
+  const out=[];
+  Object.entries(daily).forEach(([k,v])=>{(v||"").split(/\n|。/).forEach(line=>{const t=line.replace(/^[・\s]+/,"").trim();if(t&&!state.skipped.includes(t)&&ASK_WORDS.some(w=>t.includes(w))&&!state.consults.some(c=>c.what&&t.includes(c.what.slice(0,8))))out.push(t);});});
+  return out;
 }
 function renderConfirm(){
   const p=me();
@@ -269,6 +275,7 @@ function renderConfirm(){
   <p class="hint">下の内容で記録し、相談はTodoistの「${esc(p.project)}」の📥社長がやる に起票します。</p>`;
   const bad=state.consults.filter(c=>!c.what.trim());
   if(bad.length)h+=`<div class="inline-confirm">1行目が空の相談が${bad.length}件あります。戻って入力してください。</div>`;
+  findAsks().forEach((t,j)=>{h+=`<div class="inline-confirm" style="border-color:var(--wait);background:var(--wait-soft)"><div><b>日報の中に、社長への相談らしい文があります。相談にしますか？</b></div><div>「${esc(t)}」</div><div class="hint">相談にしないと、社長のTodoistには届きません。</div><div class="actions"><button class="btn ghost small" data-act="skipask" data-t="${esc(t)}">このまま送る</button><button class="btn primary small" data-act="toask" data-t="${esc(t)}">相談にする</button></div></div>`;});
   state.consults.forEach((c,i)=>{
     const id=`R20261015-004`;
     if(c.kind==="共有のみ"){h+=`<div class="preview"><div class="preview-h"><span>相談 ${i+1}：共有のみ</span><span>Todoistには起票しません</span></div><div class="preview-b"><div class="ptitle">${esc(c.what)}</div><div class="c-meta">${esc(c.to)}</div></div></div>`;return;}
@@ -286,7 +293,7 @@ function renderSent(){
     <div>日報を記録し、相談${n}件をTodoistの📥社長がやる に起票しました。${sh?`共有${sh}件は記録だけ残しました。`:""}</div>
     <div class="hint">報告ID R20261015-004　／　回答は「自分の相談」で見られます</div></div>
     <div class="card"><div class="c-top"><span class="status fail">起票失敗の例</span></div>
-    <div style="font-size:14px">Todoistにつながらず起票できなかった場合は、ここに表示し、藤本さんにもメールで知らせます。報告そのものは保存されています。</div></div>`;
+    <div style="font-size:14px">Todoistにつながらず起票できなかった場合も、報告そのものは保存されています。BEACONが30分ごとに自動で起票し直し、それでも失敗したら藤本さんにメールで知らせます。</div></div>`;
   setBottom(`<button class="btn ghost" data-act="tomine">自分の相談を見る</button><button class="btn primary" data-act="again">新しい報告を書く</button>`);
 }
 
@@ -320,24 +327,10 @@ function renderMine(){
 function renderDetail(){
   const s=SAMPLE(state.who),d=s.detail,p=me();
   $("#main").innerHTML=`<div class="date">${esc(d.date)}<span class="sub">${esc(p.name)}さん・${esc(form().label)}</span></div>
-  <p class="hint">Todoistの【出典】リンクから開く画面です（報告ID ${esc(d.id)}）。</p>
+  <p class="hint">自分が出した過去の報告を見る画面です（報告ID ${esc(d.id)}）。</p>
   <section class="card daily-view"><dl style="margin:0">${d.daily.map(([t,b])=>`<dt>【${esc(t)}】</dt><dd>${esc(b)}</dd>`).join("")}</dl></section>
   <div class="sec-title"><h2>相談</h2><span>${d.consults.length}件</span></div>
   ${d.consults.map(i=>s.mine[i]).map(m=>`<section class="card"><div class="c-top"><span class="status ${ST[m.st][1]}">${ST[m.st][0]}</span><span class="tag kind">${m.kind}</span></div><div class="c-title">${esc(m.title)}</div><div class="c-meta">TodoistタスクID 88123450${m.id.slice(1)}　<a href="#" style="color:var(--dept)">Todoistで開く</a></div></section>`).join("")}`;
-  setBottom(null);
-}
-
-/* ---------- 社長用 ---------- */
-function renderBoss(){
-  const rep=[["10/15 8:50","岩田","営業部","続報1件","—"],["10/14 18:10","藤原","管理部","日報＋相談1","起票済"],["10/14 18:02","大野","管理部","日報＋相談3","1件失敗"],["10/14 17:58","向井","不動産事業部","日報＋相談1","起票済"],["10/14 17:55","八角","営業部","日報＋相談1＋共有1","起票済"],["10/14 17:54","岩田","営業部","日報＋相談1","起票済"],["10/14 12:57","森","総務部","日報＋相談1","起票済"],["10/13 15:10","三川","総務部","日報＋共有1","—"]];
-  $("#main").innerHTML=`<div class="filters">${[["reports","全員の報告"],["fails","起票の失敗"]].map(([k,l])=>`<button class="chip" aria-pressed="${state.boss===k}" data-act="boss" data-b="${k}">${l}${k==="fails"?`<span class="n">1</span>`:""}</button>`).join("")}</div>`+
-  (state.boss==="reports"?`<section class="card"><div class="tbl-wrap"><table><thead><tr><th>日時</th><th>報告者</th><th>部署</th><th>内容</th><th>起票</th></tr></thead><tbody>
-    ${rep.map(r=>`<tr><td class="num">${r[0]}</td><td>${r[1]}</td><td><span class="tag dept">${r[2]}</span></td><td>${r[3]}</td><td>${r[4]==="1件失敗"?`<span class="status fail">${r[4]}</span>`:r[4]}</td></tr>`).join("")}</tbody></table></div>
-    <p class="hint" style="margin:0">見るだけの画面です。回答はこれまでどおりClaudeの社長回答コメントスキルで行います。</p></section>`
-  :`<section class="card"><div class="c-top"><span class="status fail">起票失敗</span><span class="c-meta">10/14 18:02 大野さん</span></div>
-    <div class="c-title">[銀行／給与振込] 振込限度額を銀行で変更してよいか（大野さん）</div>
-    <pre class="desc">Todoist API 503 Service Unavailable（3回再試行して失敗）</pre>
-    <div class="actions"><button class="btn primary small">もう一度起票する</button></div></section>`);
   setBottom(null);
 }
 
@@ -360,7 +353,8 @@ document.addEventListener("click",e=>{
   else if(a==="openf")state.openAns=t.dataset.id+"f";
   else if(a==="openc")state.openAns=t.dataset.id+"c";
   else if(a==="close")state.openAns=null;
-  else if(a==="boss")state.boss=t.dataset.b;
+  else if(a==="toask"){state.consults.push(newConsult({kind:"判断",what:t.dataset.t}));state.step="form";window.scrollTo(0,document.body.scrollHeight);}
+  else if(a==="skipask")state.skipped.push(t.dataset.t);
   else return;
   e.preventDefault();render();
 });

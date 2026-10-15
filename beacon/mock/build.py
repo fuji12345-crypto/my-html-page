@@ -116,7 +116,7 @@ S["mori"] = {
                "consults": [1]}}
 S["oono"] = {
     "ph": {"work": "・会計事務所質問事項対応\n・20日締め請求書作成開始\n・勤怠確認",
-           "report": "・社用車（丸尾さん使用）の整備は部品交換が必要で、早くて11月上旬とのこと"},
+           "report": "・社用車（丸尾さん使用）の整備は部品交換が必要で、早くて11月上旬とのこと\n・不動産事業部案件の請求書を作成しました。社長にご確認いただいてから送付してよろしいでしょうか"},
     "consults": [
         {"kind": "確認", "what": "雇用契約書（丸尾さん・鶴來さん）に押印してほしい", "to": "社内／雇用契約書",
          "bg": "本人からお預かりしました。押印後、本人控えをお返しします。"},
@@ -185,7 +185,7 @@ PAGES = {
     "oono": {"title": "BEACON 大野さん", "mockName": "大野さん（管理部）", "people": ["oono"], "forms": {"oono": OONO}},
     "fujiwara": {"title": "BEACON 藤原さん", "mockName": "藤原さん（管理部・執行役員）", "people": ["fujiwara"], "forms": {"fujiwara": FUJIWARA}},
     "mukai": {"title": "BEACON 向井さん", "mockName": "向井さん（不動産事業部）", "people": ["mukai"], "forms": {"mukai": MUKAI}},
-    "index": {"title": "LANDEX BEACON モック", "mockName": "藤本さん（社長用・テスト）", "people": ["fujimoto"], "forms": {"fujimoto": SALES}, "startTab": "boss"},
+    "index": {"title": "LANDEX BEACON モック", "mockName": "藤本さん（テスト用）", "people": ["fujimoto"], "forms": {"fujimoto": SALES}},
 }
 
 for key, page in PAGES.items():
