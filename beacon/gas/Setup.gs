@@ -7,7 +7,7 @@ const LB_HEADERS = {
   '報告': ['報告ID', '送信日時', '報告日', 'メール', '報告者', '部署', '書式', 'テスト', '日報', '日報JSON', '相談件数'],
   '相談': ['相談ID', '報告ID', '送信日時', '報告日', '報告者', 'メール', '部署', '種類', '何を決めてほしいか', '相手先・件名',
            '背景・事実', '期限（入力）', '期限（設定）', '仮期限', '資料', '起票先', '状態', 'TodoistタスクID', 'TodoistURL',
-           '日報コメント', '試行回数', '最終試行', 'エラー', '失敗通知'],
+           '日報コメント', '試行回数', '最終試行', 'エラー', '失敗通知', '完了'],
   '会社休日': ['日付', 'メモ']
 };
 
@@ -32,9 +32,13 @@ function LB_setup() {
       // 日付などが勝手に変換されないよう、会社休日以外は文字列で保存する
       if (name !== '会社休日') sh.getRange(1, 1, sh.getMaxRows(), head.length).setNumberFormat('@');
     } else {
+      // 新しい版で増えた見出しは右端に足す
       const now = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
       head.forEach(function (h) {
-        if (now.indexOf(h) < 0) throw new Error('シート「' + name + '」に見出し「' + h + '」がありません');
+        if (now.indexOf(h) >= 0) return;
+        const col = sh.getLastColumn() + 1;
+        sh.getRange(1, col).setValue(h).setFontWeight('bold');
+        sh.getRange(2, col, sh.getMaxRows() - 1, 1).setNumberFormat('@');
       });
     }
   });
