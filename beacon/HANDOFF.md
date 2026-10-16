@@ -14,6 +14,7 @@ PCのClaude Codeは、最初にこのファイルと `beacon/README.md` を読�
 ## いまの状態（2026/10/15 時点）
 
 - ブランチ `claude/beacon-mock` に、モック（`beacon/mock/`）と、フェーズ1のGASコード（`beacon/gas/`）がある。
+- `beacon/gas/Mine.gs` はフェーズ2（自分の相談の一覧・続報・完了・過去の報告）のサーバー側の処理で、書きかけ。画面からはまだ呼んでいないので、フェーズ1の動きには影響しない。そのまま一緒に push してよい。
 - GASはまだ一度もGoogle上で動かしていない。Googleのサービスを偽物に置き換えた手元テストだけ通っている。
 - Todoistに「BEACONテスト」プロジェクトを作成済み（藤本さんの個人プロジェクト、ボード表示）。
   - プロジェクト `6hmHpvHwFwwppqJH`
